@@ -67,7 +67,7 @@ void* thread_win0(void* data)
     while ( 1 )
     {
         use_window(win,display_data,buff);
-        sleep(1);
+        usleep(5000);
     }
     pthread_exit(NULL);
 }
