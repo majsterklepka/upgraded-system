@@ -16,9 +16,28 @@
 #include "dest.h"
 
 char buff[255];
+int frozen;
+
+void frozen0()
+{
+    if (frozen == 0)
+        frozen = 1;
+    else
+        frozen = 0;
+}
 
 int display_data (WINDOW *win, void *data)
 {
+    if(frozen)
+    {
+        addstr("frozen ... for 8s");
+        refresh();
+        sleep(8);
+        frozen = 0;
+        move(0,0);
+        clrtoeol();
+        refresh();
+    }
     if (data != NULL)
     {
         switch(prefix((const char*)data))
@@ -82,6 +101,7 @@ int main()
     char mesg[] = "Arduino Multi-Channel Voltmeter";
     char mesg1[] = "GNU GPLv3, ©2020 by SQ7EQE";
     char mesg2[] = "F1 - quit application";
+    frozen = 0;
 
     initscr();
     keypad(stdscr, TRUE);
@@ -91,40 +111,46 @@ int main()
     noecho();
     refresh();
     curs_set(0);
-    
+
     win01 = newwin(wl1,wc1,0,0);
     win02 = newwin(wl1,wc1,wl1,0);
-    
+
     scrollok(win02,FALSE);
     scrollok(win01, FALSE);
-    
+
     getmaxyx(win01,y1,x1);
-    
+
     mvwprintw(win01, y1/2 - 1, (x1 - strlen(mesg))/2, "%s", mesg);
     mvwprintw(win01, y1/2, (x1 - strlen(mesg1))/2, "%s", mesg1);
     mvwprintw(win01, y1/2 + 1, (x1 - strlen(mesg2))/2, "%s", mesg2);
-    
+
     wrefresh(win02);
-    
+
     mvwprintw(win02, 0, 0, "Channel\tVoltage");
-    
+
     wmove(win02, 1,0);
     whline(win02, '-', 20);
-   
+
     for (k = 2; k < 8; k++)
     {
         mvwprintw(win02,k,0,"A%d : ", k-2);
     }
-   
+
     wrefresh(win01);
 
     pthread_create(&t1,NULL,thread_win0,win02);
     pthread_create(&t2,NULL,serial01,buff);
 
-    while (1)
+    while ((ch = getch()) != KEY_F(1))
     {
-        ch = getch();
-        if (ch == KEY_F(1)) break;
+        switch(ch)
+        {
+        case 'f':
+            frozen0();
+            break;
+        default:
+            break;
+        }
         sleep(1);
     }
     endwin();
